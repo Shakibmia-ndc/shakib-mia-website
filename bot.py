@@ -20,7 +20,7 @@ from aiogram.exceptions import TelegramForbiddenError, TelegramUnauthorizedError
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://vairal-video-18-default-rtdb.firebaseio.com/' 
+        'databaseURL': 'https://mr-games-club-default-rtdb.firebaseio.com/' 
     })
 
 # --- ২. ট্রাফিক পুলিশ (Rate Limiter) Middleware ---
@@ -42,9 +42,9 @@ class TrafficPoliceMiddleware(BaseMiddleware):
         return await handler(event, data)
 
 # --- ৩. কনফিগারেশন ও বট সেটআপ ---
-TOKEN = "8725966974:AAEXiKDB2dDfc1m_GCIoDou14vUq-1PZYO8" 
-ADMIN_LIST = [6856009995, 8724211967] 
-WEB_APP_URL = "https://mr-tube.pages.dev/" 
+TOKEN = "8667547386:AAEKUjJxqR16Ci7mU4ERD-GnBEPv1naU1X4" 
+ADMIN_LIST = [6856009995, 5846193023] 
+WEB_APP_URL = "https://movibd.pages.dev/" 
 CHANNEL_USERNAME = "@bachelor_update"
 CHANNEL_LINK = "https://t.me/bachelor_update"
 
@@ -110,7 +110,7 @@ async def start_handler(message: Message, command: CommandObject = None, state: 
     subscribed = await is_subscribed(int(user_id))
     welcome_text = (
         f"<b>আসসালামুয়ালাইকুম 🥰</b>\n\n"
-        f"MR TUBE বটে আপনাকে স্বাগতম। আমাদের সকল ভিডিওর আপডেট পেতে এবং বট সচল রাখতে নিচের চ্যানেলে জয়েন করুন।\n\n"
+        f"MOVI TUBE বটে আপনাকে স্বাগতম। নিচের চ্যানেলে জয়েন করুন।\n\n"
         f"নিচের <b>Watch Now</b> বাটনে ক্লিক করে সরাসরি আমাদের ওয়েব অ্যাপে ভিডিও দেখুন। 🥰"
     )
 
@@ -186,7 +186,7 @@ async def add_v_final(message: Message, state: FSMContext):
         'video_url': message.text 
     })
     
-    await message.answer(f"✅ ভিডিও PRONTUBE ডাটাবেসে সফলভাবে যুক্ত হয়েছে!\nআইডি: `{v_id}`", reply_markup=get_admin_kb())
+    await message.answer(f"✅ ভিডিও MOVI TUBE ডাটাবেসে সফলভাবে যুক্ত হয়েছে!\nআইডProntubed}`", reply_markup=get_admin_kb())
     await state.clear()
 
 # --- ১০. ভিডিও ডিলিট সেকশন ---
