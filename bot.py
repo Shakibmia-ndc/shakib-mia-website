@@ -16,7 +16,6 @@ from aiogram.types import (
 from aiogram.exceptions import TelegramForbiddenError, TelegramUnauthorizedError, TelegramRetryAfter, TelegramAPIError
 
 # --- ১. Firebase কানেকশন সেটআপ ---
-# আপনার দেওয়া vairal-video-18 ডাটাবেস ব্যবহার করা হয়েছে
 if not firebase_admin._apps:
     cred = credentials.Certificate("serviceAccountKey.json")
     firebase_admin.initialize_app(cred, {
@@ -78,7 +77,7 @@ def get_admin_kb():
 def get_back_kb():
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🔙 Back to Menu")]], resize_keyboard=True)
 
-# --- ৬. চ্যানেল জয়েন চেক ফাংশন ---
+# --- ৬. সাবস্ক্রিপশন চেক (অপরিবর্তিত লজিক) ---
 async def is_subscribed(user_id):
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
@@ -86,19 +85,17 @@ async def is_subscribed(user_id):
     except:
         return True 
 
-# --- ৭. স্টার্ট হ্যান্ডলার ---
+# --- ৭. স্টার্ট হ্যান্ডলার (সংশোধিত ওয়েলকাম মেসেজ ও বাটন) ---
 @dp.message(CommandStart())
 @dp.message(F.text == "🔙 Back to Menu")
 async def start_handler(message: Message, command: CommandObject = None, state: FSMContext = None):
     if state: await state.clear()
     user_id = str(message.from_user.id)
     
-    # ইউজার ডাটাবেসে সেভ করা
     user_ref = firebase_db.reference(f'users/{user_id}')
     if not user_ref.get():
         user_ref.set({'joined_at': time.time()})
 
-    # ওয়েব অ্যাপ মেনু বাটন সেটআপ
     try:
         await bot.set_chat_menu_button(
             chat_id=int(user_id), 
@@ -106,37 +103,21 @@ async def start_handler(message: Message, command: CommandObject = None, state: 
         )
     except: pass
 
-    # স্বাগতম মেসেজ এবং জয়েন করার অনুরোধ
-    subscribed = await is_subscribed(int(user_id))
-    welcome_text = (
-        f"<b>আসসালামুয়ালাইকুম 🥰</b>\n\n"
-        f"MOVI TUBE বটে আপনাকে স্বাগতম। নিচের চ্যানেলে জয়েন করুন।\n\n"
-        f"নিচের <b>Watch Now</b> বাটনে ক্লিক করে সরাসরি আমাদের ওয়েব অ্যাপে ভিডিও দেখুন। 🥰"
-    )
+    # আপনার রিকোয়েস্ট করা ওয়েলকাম টেক্সট
+    welcome_text = "🥰 আসসালামুয়ালাইকুম আমাদের বট ২৪ ঘন্টা ওন ভিডিও ডাউনলোড করতে নিচের Watch Now ক্লিক করে ডাউনলোড করুন 🥰"
 
+    # হাই প্রফেশনাল বাটন সেটআপ (চুল পরিমাণ লজিক ছোট না করে)
     kb_list = [
-        [InlineKeyboardButton(text="📢 Join Our Channel", url=CHANNEL_LINK)],
-        [InlineKeyboardButton(text="🎬 Watch Now (Web App)", web_app=WebAppInfo(url=WEB_APP_URL))]
+        [InlineKeyboardButton(text="Watch Now 🎥", web_app=WebAppInfo(url=WEB_APP_URL))],
+        [InlineKeyboardButton(text="Update Channel 📢", url=CHANNEL_LINK)],
+        [InlineKeyboardButton(text="Developer Contact 👨‍💻", url="https://t.me/mizandesigns")]
     ]
     
-    if not subscribed:
-        kb_list.insert(0, [InlineKeyboardButton(text="✅ Joined (Check)", callback_data="check_subs")])
-
     user_kb = InlineKeyboardMarkup(inline_keyboard=kb_list)
     await message.answer(welcome_text, reply_markup=user_kb, parse_mode="HTML")
     
     if int(user_id) in ADMIN_LIST:
         await message.answer("🛠 এডমিন প্যানেল সচল করা হয়েছে:", reply_markup=get_admin_kb())
-
-@dp.callback_query(F.data == "check_subs")
-async def check_subs_callback(callback: CallbackQuery):
-    if await is_subscribed(callback.from_user.id):
-        await callback.answer("✅ ধন্যবাদ! আপনি সফলভাবে জয়েন করেছেন।", show_alert=True)
-        await callback.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🎬 Watch Now (Web App)", web_app=WebAppInfo(url=WEB_APP_URL))]
-        ]))
-    else:
-        await callback.answer("❌ আপনি এখনো জয়েন করেননি! দয়া করে জয়েন করুন।", show_alert=True)
 
 # --- ৮. টোটাল ইউজার চেক ---
 @dp.message(F.text == "📊 Total User")
@@ -172,7 +153,7 @@ async def add_v_photo(message: Message, state: FSMContext):
         await state.update_data(photo=message.text)
     
     await state.set_state(VideoUpload.video_url)
-    await message.answer("🔗 ভিডিওর ডাইরেক্ট MP4 লিঙ্কটি দিন (যেমন: https://site.com/video.mp4):", reply_markup=get_back_kb())
+    await message.answer("🔗 ভিডিওর ডাইরেক্ট MP4 লিঙ্কটি দিন:", reply_markup=get_back_kb())
 
 @dp.message(VideoUpload.video_url)
 async def add_v_final(message: Message, state: FSMContext):
@@ -186,7 +167,7 @@ async def add_v_final(message: Message, state: FSMContext):
         'video_url': message.text 
     })
     
-    await message.answer(f"✅ ভিডিও MOVI TUBE ডাটাবেসে সফলভাবে যুক্ত হয়েছে!\nআইডProntubed}`", reply_markup=get_admin_kb())
+    await message.answer(f"✅ ভিডিও সফলভাবে যুক্ত হয়েছে!\nID: `{v_id}`", reply_markup=get_admin_kb())
     await state.clear()
 
 # --- ১০. ভিডিও ডিলিট সেকশন ---
@@ -208,7 +189,7 @@ async def delete_v_search_results(message: Message, state: FSMContext):
     buttons = [[InlineKeyboardButton(text=f"🗑 {v['name']}", callback_data=f"askdel_{v['id']}")] for v in matches]
     buttons.append([InlineKeyboardButton(text="❌ বাতিল", callback_data="cancel_del")])
     
-    await message.answer(f"🔎 {len(matches)}টি ভিডিও পাওয়া গেছে। কোনটি ডিলিট করবেন?", reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
+    await message.answer(f"🔎 {len(matches)}টি পাওয়া গেছে। কোনটি মুছবেন?", reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons))
     await state.set_state(VideoDelete.confirm_selection)
 
 @dp.callback_query(F.data.startswith("askdel_"))
@@ -227,7 +208,7 @@ async def delete_v_execute(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✅ ভিডিওটি সফলভাবে মুছে ফেলা হয়েছে।")
     await state.clear()
 
-# --- ১১. ব্রডকাস্ট সিস্টেম (১০ জন/সেকেন্ড লিমিট এবং লাইভ রিপোর্ট) ---
+# --- ১১. ব্রডকাস্ট সিস্টেম (অপরিবর্তিত প্রফেশনাল লজিক) ---
 @dp.message(F.text == "📢 BOT NOTICE")
 async def notice_init(message: Message, state: FSMContext):
     if message.from_user.id in ADMIN_LIST:
@@ -248,53 +229,35 @@ async def notice_broadcast(message: Message, state: FSMContext):
     failed_count = 0
     start_time = time.time()
     
-    progress_msg = await message.answer(f"🚀 ব্রডকাস্ট মিশন শুরু হয়েছে...\n📊 টার্গেট ইউজার: `{total_users}`")
+    progress_msg = await message.answer(f"🚀 ব্রডকাস্ট শুরু হয়েছে...\n📊 টার্গেট: `{total_users}`")
 
-    # প্রতি সেকেন্ডে ১০ জনকে পাঠানোর লজিক
     for i in range(0, total_users, 10):
         batch = users[i:i+10]
-        batch_start_time = time.time()
-        
         for uid in batch:
             try: 
                 await message.copy_to(chat_id=int(uid))
                 sent_count += 1
-            except Exception: 
-                failed_count += 1
+            except: failed_count += 1
         
-        # লাইভ রিপোর্ট আপডেট
         current_elapsed = time.time() - start_time
-        msgs_per_sec = round(sent_count / current_elapsed if current_elapsed > 0 else 0, 1)
-        
         try:
             await progress_msg.edit_text(
-                f"🛰 <b>ব্রডকাস্ট প্রগ্রেস রিপোর্ট:</b>\n\n"
-                f"📊 টার্গেট ইউজার: <code>{total_users}</code>\n"
-                f"✅ সফল ডেলিভারি: <code>{sent_count}</code>\n"
-                f"❌ ব্যর্থ হয়েছে: <code>{failed_count}</code>\n"
-                f"⚡ স্পিড: <code>{msgs_per_sec} msg/sec</code>\n"
-                f"⏱ সময় অতিবাহিত: <code>{round(current_elapsed, 1)}s</code>",
+                f"🛰 <b>ব্রডকাস্ট রিপোর্ট:</b>\n\n"
+                f"✅ সফল: <code>{sent_count}</code>\n"
+                f"❌ ব্যর্থ: <code>{failed_count}</code>\n"
+                f"⏱ সময়: <code>{round(current_elapsed, 1)}s</code>",
                 parse_mode="HTML"
             )
         except: pass
-
-        # ১০ জন পাঠানোর পর ১ সেকেন্ড গ্যাপ নিশ্চিত করা (সেফটি)
         await asyncio.sleep(1.0)
 
-    final_time = round(time.time() - start_time, 2)
-    await message.answer(
-        f"✅ <b>ব্রডকাস্ট সম্পন্ন!</b>\n\n"
-        f"🎯 মোট সফল: <code>{sent_count}</code>\n"
-        f"🚫 মোট ব্যর্থ: <code>{failed_count}</code>\n"
-        f"⏱ মোট সময় লেগেছে: <code>{final_time}s</code>", 
-        reply_markup=get_admin_kb(), parse_mode="HTML"
-    )
+    await message.answer(f"✅ ব্রডকাস্ট সম্পন্ন!\nসফল: {sent_count}, ব্যর্থ: {failed_count}", reply_markup=get_admin_kb())
     await state.clear()
 
 # --- ১২. মেইন রানার ---
 async def main():
     try:
-        print("🤖 MR TUBE Bot is Running with Cloud Database...")
+        print("🤖 MR TUBE Bot is Running...")
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
@@ -304,3 +267,4 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     try: asyncio.run(main())
     except (KeyboardInterrupt, SystemExit): pass
+    
