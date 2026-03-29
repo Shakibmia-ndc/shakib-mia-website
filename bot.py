@@ -77,7 +77,7 @@ def get_admin_kb():
 def get_back_kb():
     return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🔙 Back to Menu")]], resize_keyboard=True)
 
-# --- ৬. সাবস্ক্রিপশন চেক (অপরিবর্তিত লজিক) ---
+# --- ৬. সাবস্ক্রিপশন চেক লজিক ---
 async def is_subscribed(user_id):
     try:
         member = await bot.get_chat_member(chat_id=CHANNEL_USERNAME, user_id=user_id)
@@ -85,7 +85,7 @@ async def is_subscribed(user_id):
     except:
         return True 
 
-# --- ৭. স্টার্ট হ্যান্ডলার (সংশোধিত ওয়েলকাম মেসেজ ও বাটন) ---
+# --- ৭. স্টার্ট হ্যান্ডলার (আপনার রিকোয়েস্ট অনুযায়ী সংশোধিত) ---
 @dp.message(CommandStart())
 @dp.message(F.text == "🔙 Back to Menu")
 async def start_handler(message: Message, command: CommandObject = None, state: FSMContext = None):
@@ -103,10 +103,10 @@ async def start_handler(message: Message, command: CommandObject = None, state: 
         )
     except: pass
 
-    # আপনার রিকোয়েস্ট করা ওয়েলকাম টেক্সট
+    # আপনার দেওয়া ওয়েলকাম টেক্সট
     welcome_text = "🥰 আসসালামুয়ালাইকুম আমাদের বট ২৪ ঘন্টা ওন ভিডিও ডাউনলোড করতে নিচের Watch Now ক্লিক করে ডাউনলোড করুন 🥰"
 
-    # হাই প্রফেশনাল বাটন সেটআপ (চুল পরিমাণ লজিক ছোট না করে)
+    # হাই প্রফেশনাল ৩টি বাটন (হোম ইমোজি ছাড়া)
     kb_list = [
         [InlineKeyboardButton(text="Watch Now 🎥", web_app=WebAppInfo(url=WEB_APP_URL))],
         [InlineKeyboardButton(text="Update Channel 📢", url=CHANNEL_LINK)],
@@ -119,7 +119,7 @@ async def start_handler(message: Message, command: CommandObject = None, state: 
     if int(user_id) in ADMIN_LIST:
         await message.answer("🛠 এডমিন প্যানেল সচল করা হয়েছে:", reply_markup=get_admin_kb())
 
-# --- ৮. টোটাল ইউজার চেক ---
+# --- ৮. টোটাল ইউজার চেক (অপরিবর্তিত) ---
 @dp.message(F.text == "📊 Total User")
 async def total_user_handler(message: Message):
     if message.from_user.id in ADMIN_LIST:
@@ -130,7 +130,7 @@ async def total_user_handler(message: Message):
         else:
             await message.answer("❌ ডাটাবেসে কোনো ইউজার পাওয়া যায়নি।")
 
-# --- ৯. ভিডিও অ্যাড করার সেকশন ---
+# --- ৯. ভিডিও অ্যাড করার সেকশন (অপরিবর্তিত) ---
 @dp.message(F.text == "➕ Add Video")
 async def add_v_start(message: Message, state: FSMContext):
     if message.from_user.id in ADMIN_LIST:
@@ -170,7 +170,7 @@ async def add_v_final(message: Message, state: FSMContext):
     await message.answer(f"✅ ভিডিও সফলভাবে যুক্ত হয়েছে!\nID: `{v_id}`", reply_markup=get_admin_kb())
     await state.clear()
 
-# --- ১০. ভিডিও ডিলিট সেকশন ---
+# --- ১০. ভিডিও ডিলিট সেকশন (অপরিবর্তিত) ---
 @dp.message(F.text == "🔕 Delete Video")
 async def delete_v_init(message: Message, state: FSMContext):
     if message.from_user.id in ADMIN_LIST:
@@ -208,7 +208,7 @@ async def delete_v_execute(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✅ ভিডিওটি সফলভাবে মুছে ফেলা হয়েছে।")
     await state.clear()
 
-# --- ১১. ব্রডকাস্ট সিস্টেম (অপরিবর্তিত প্রফেশনাল লজিক) ---
+# --- ১১. ব্রডকাস্ট সিস্টেম (অপরিবর্তিত) ---
 @dp.message(F.text == "📢 BOT NOTICE")
 async def notice_init(message: Message, state: FSMContext):
     if message.from_user.id in ADMIN_LIST:
@@ -254,7 +254,7 @@ async def notice_broadcast(message: Message, state: FSMContext):
     await message.answer(f"✅ ব্রডকাস্ট সম্পন্ন!\nসফল: {sent_count}, ব্যর্থ: {failed_count}", reply_markup=get_admin_kb())
     await state.clear()
 
-# --- ১২. মেইন রানার ---
+# --- ১২. মেইন রানার (অপরিবর্তিত) ---
 async def main():
     try:
         print("🤖 MR TUBE Bot is Running...")
